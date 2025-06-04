@@ -6,6 +6,7 @@ import { MinMaxGUIHelper } from './camera.js';
 import { ColorGUIHelper } from './ColorGUI.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { PMREMGenerator } from 'three/src/extras/PMREMGenerator.js';
+import { instance } from 'three/tsl';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -53,29 +54,29 @@ cube.position.set(0, 0, -4);
 scene.add(cube);
 
 /// ChatGPT helped me with these performant cubes
-// const cubeCount = 20;
-// const cubeGeometry = new THREE.BoxGeometry(1,1,1);
-// const cubeMaterial = new THREE.MeshStandardMaterial({ map: texture });
+const cubeCount = 5;
+const cubeGeometry = new THREE.BoxGeometry(1,1,1);
+const cubeMaterial = new THREE.MeshStandardMaterial({ map: texture });
 
-// const instancedCubes = new THREE.InstancedMesh(cubeGeometry, cubeMaterial, cubeCount);
-// scene.add(instancedCubes);
+const instancedCubes = new THREE.InstancedMesh(cubeGeometry, cubeMaterial, cubeCount);
+scene.add(instancedCubes);
 
-// const dummy = new THREE.Object3D();
+const dummy = new THREE.Object3D();
 
-// for (let i = 0; i < cubeCount; i++) {
-//     dummy.position.set(
-//         Math.random() * 100 - 50,
-//         Math.random() * 10,
-//         Math.random() * 100 - 50
-//     );
-//     dummy.rotation.set(
-//         Math.random() * Math.PI,
-//         Math.random() * Math.PI,
-//         0
-//     );
-//     dummy.updateMatrix();
-//     instancedCubes.setMatrixAt(i, dummy.matrix);
-// }
+for (let i = 0; i < cubeCount; i++) {
+    dummy.position.set(
+        i-2,
+        Math.random() * 2 + 1, // Random height between 1 and 3
+        Math.random() * 2 - 5 // Random position on the z-axis
+    );
+    dummy.rotation.set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        0
+    );
+    dummy.updateMatrix();
+    instancedCubes.setMatrixAt(i, dummy.matrix);
+}
 
 // This is for the ground plane
 const groundGeometry = new THREE.PlaneGeometry(30, 30);
@@ -127,6 +128,7 @@ scene.add(hemisphereLight);
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
+    instancedCubes.rotation.y += 0.002;
     cube.rotation.x += 0.01;
     cube.rotation.y += 0.01;
     renderer.render(scene, camera);
@@ -191,6 +193,47 @@ person2.position.set(-2, -1.5, 0);
 person2.rotation.y = -Math.PI / 4;
 scene.add(person2);
 
+/// ChatGPT helped me with this bow and arrow creation
+function createSimpleBowAndArrow() {
+    const bowAndArrow = new THREE.Group();
+
+    const bowMaterial = new THREE.MeshStandardMaterial({ color: 0x5c3d1c });
+    const stringMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+    const arrowMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+    const headMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+
+    // Bow body (semi circle)
+    const bow = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.05, 6, 16, Math.PI), bowMaterial);
+    bow.rotation.z = Math.PI / 2;
+    bow.position.y = 1;
+    bowAndArrow.add(bow);
+
+    // Bowstring
+    const string = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 2.4, 4), stringMaterial);
+    string.position.y = 1;
+    bowAndArrow.add(string);
+
+    // Arrow shaft
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.5, 6), arrowMaterial);
+    shaft.rotation.z = Math.PI / 2;
+    shaft.position.set(0, 1, 0);
+    bowAndArrow.add(shaft);
+
+    // Arrowhead
+    const head = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.2, 4), headMaterial);
+    head.rotation.z = Math.PI / 2;
+    head.position.set(-.75, 1, 0);
+    bowAndArrow.add(head);
+
+    return bowAndArrow;
+}
+
+const bowAndArrow = createSimpleBowAndArrow();
+bowAndArrow.position.set(1.3, -1, 0);
+bowAndArrow.rotation.y = -Math.PI / 2.5; // Rotate to face the camera
+scene.add(bowAndArrow);
+
+/// ChatGPT helped me with this GUI setup
 const gui = new GUI();
 gui.add(camera, 'fov', 1, 180).onChange(updateCamera);
 const minMaxGUIHelper = new MinMaxGUIHelper(camera, 'near', 'far', 0.1);
