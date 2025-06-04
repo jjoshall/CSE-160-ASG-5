@@ -4,8 +4,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { MinMaxGUIHelper } from './camera.js';
 import { ColorGUIHelper } from './ColorGUI.js';
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { PMREMGenerator } from 'three/src/extras/PMREMGenerator.js';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -19,22 +17,6 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = false;
 renderer.toneMapping = THREE.NoToneMapping;
 document.body.appendChild(renderer.domElement);
-
-/// ChatGPT helped me with this skybox setup
-const pmremGenerator = new PMREMGenerator(renderer);
-pmremGenerator.compileEquirectangularShader();
-
-new RGBELoader()
-    .setPath('ASG5/')
-    .load('sky.hdr', function (hdrTexture) {
-        const envMap = pmremGenerator.fromEquirectangular(hdrTexture).texture;
-
-        scene.environment = envMap; // for reflective materials (MeshStandard, etc.)
-        scene.background = envMap;  // optional: to use as skybox
-
-        hdrTexture.dispose();
-        pmremGenerator.dispose();
-    });
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -50,6 +32,19 @@ const material = new THREE.MeshStandardMaterial({ map: texture });
 const cube = new THREE.Mesh(geometry, material);
 cube.position.set(0, 0, -4);
 scene.add(cube);
+
+// This is for the sky
+const loader1 = new THREE.TextureLoader();
+const texture1 = loader1.load('ASG5/forest.jpg');
+texture1.colorSpace = THREE.SRGBColorSpace;
+const geometry1 = new THREE.SphereGeometry(1000, 32, 32);
+const material1 = new THREE.MeshBasicMaterial({
+    map: texture1,
+    side: THREE.BackSide // Use BackSide to render the inside of the sphere
+});
+const sky = new THREE.Mesh(geometry1, material1);
+sky.position.set(0, 0, 0);
+scene.add(sky);
 
 /// ChatGPT helped me with these performant cubes
 const cubeCount = 5;

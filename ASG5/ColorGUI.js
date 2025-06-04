@@ -1,5 +1,3 @@
-import { exp } from "three/tsl";
-
 class ColorGUIHelper {
   constructor(object, prop) {
     this.object = object;
