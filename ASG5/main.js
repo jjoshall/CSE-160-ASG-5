@@ -6,7 +6,6 @@ import { MinMaxGUIHelper } from './camera.js';
 import { ColorGUIHelper } from './ColorGUI.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { PMREMGenerator } from 'three/src/extras/PMREMGenerator.js';
-import { instance } from 'three/tsl';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
