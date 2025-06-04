@@ -37,16 +37,15 @@ new RGBELoader()
         pmremGenerator.dispose();
     });
 
-
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
-// This is for checkerboard texture
+// This is for texture
 const loader = new THREE.TextureLoader();
-const texture = loader.load('ASG5/checkerboard.jpg');
+const texture = loader.load('ASG5/Minecraft-Magmacube.jpg');
 texture.colorSpace = THREE.SRGBColorSpace;
 
-// This is for the checkered cube
+// This is for the textured center cube
 const geometry = new THREE.BoxGeometry(2, 2, 2);
 const material = new THREE.MeshStandardMaterial({ map: texture });
 const cube = new THREE.Mesh(geometry, material);
@@ -80,7 +79,7 @@ for (let i = 0; i < cubeCount; i++) {
 
 // This is for the ground plane
 const groundGeometry = new THREE.PlaneGeometry(30, 30);
-const groundMaterial = new THREE.MeshStandardMaterial({ map: texture, side: THREE.DoubleSide });
+const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22, side: THREE.DoubleSide }); // changed to grass green
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = -2;
