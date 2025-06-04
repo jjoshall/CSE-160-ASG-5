@@ -5,15 +5,35 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { MinMaxGUIHelper } from './camera.js';
 import { ColorGUIHelper } from './ColorGUI.js';
 import { modelDirection } from 'three/tsl';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { PMREMGenerator } from 'three/src/extras/PMREMGenerator.js';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer(
+    { antialias: true, alpha: true }
+);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = false;
 document.body.appendChild(renderer.domElement);
+
+const pmremGenerator = new PMREMGenerator(renderer);
+pmremGenerator.compileEquirectangularShader();
+
+new RGBELoader()
+    .setPath('ASG5/')
+    .load('sky.hdr', function (hdrTexture) {
+        const envMap = pmremGenerator.fromEquirectangular(hdrTexture).texture;
+
+        scene.environment = envMap; // for reflective materials (MeshStandard, etc.)
+        scene.background = envMap;  // optional: to use as skybox
+
+        hdrTexture.dispose();
+        pmremGenerator.dispose();
+    });
+
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = false;
@@ -113,6 +133,6 @@ gui.addColor(new ColorGUIHelper(directionalLight, 'color'), 'value').name('Direc
 gui.add(directionalLight, 'intensity',0, 5, 0.01);
 gui.addColor(new ColorGUIHelper(spotlight, 'color'), 'value').name('Spotlight Color');
 gui.add(spotlight, 'intensity', 10, 50, 0.01);
-// gui.addColor(new ColorGUIHelper(hemisphereLight, 'skyColor'), 'value').name('Hemisphere Sky Color');
-// gui.addColor(new ColorGUIHelper(hemisphereLight, 'groundColor'), 'value').name('Hemisphere Ground Color');
-// gui.add(hemisphereLight, 'intensity', 0, 5, 0.01).name('Hemisphere Intensity');
+gui.addColor(new ColorGUIHelper(hemisphereLight, 'color'), 'value').name('Hemisphere Sky Color');
+gui.addColor(new ColorGUIHelper(hemisphereLight, 'groundColor'), 'value').name('Hemisphere Ground Color');
+gui.add(hemisphereLight, 'intensity', 0, 5, 0.01).name('Hemisphere Intensity');
