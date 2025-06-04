@@ -4,7 +4,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { MinMaxGUIHelper } from './camera.js';
 import { ColorGUIHelper } from './ColorGUI.js';
-import { modelDirection } from 'three/tsl';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { PMREMGenerator } from 'three/src/extras/PMREMGenerator.js';
 
@@ -14,11 +13,14 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer(
     { antialias: true, alpha: true }
 );
+renderer.useLegacyLights = false; // Disable legacy lights
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = false;
+renderer.toneMapping = THREE.NoToneMapping;
 document.body.appendChild(renderer.domElement);
 
+/// ChatGPT helped me with this skybox setup
 const pmremGenerator = new PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
@@ -36,7 +38,7 @@ new RGBELoader()
 
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = false;
+controls.enableDamping = true;
 
 // This is for checkerboard texture
 const loader = new THREE.TextureLoader();
@@ -44,11 +46,38 @@ const texture = loader.load('ASG5/checkerboard.jpg');
 texture.colorSpace = THREE.SRGBColorSpace;
 
 // This is for the checkered cube
-const geometry = new THREE.BoxGeometry(1, 1, 1);
+const geometry = new THREE.BoxGeometry(2, 2, 2);
 const material = new THREE.MeshStandardMaterial({ map: texture });
 const cube = new THREE.Mesh(geometry, material);
+cube.position.set(0, 0, -4);
 scene.add(cube);
 
+/// ChatGPT helped me with these performant cubes
+// const cubeCount = 20;
+// const cubeGeometry = new THREE.BoxGeometry(1,1,1);
+// const cubeMaterial = new THREE.MeshStandardMaterial({ map: texture });
+
+// const instancedCubes = new THREE.InstancedMesh(cubeGeometry, cubeMaterial, cubeCount);
+// scene.add(instancedCubes);
+
+// const dummy = new THREE.Object3D();
+
+// for (let i = 0; i < cubeCount; i++) {
+//     dummy.position.set(
+//         Math.random() * 100 - 50,
+//         Math.random() * 10,
+//         Math.random() * 100 - 50
+//     );
+//     dummy.rotation.set(
+//         Math.random() * Math.PI,
+//         Math.random() * Math.PI,
+//         0
+//     );
+//     dummy.updateMatrix();
+//     instancedCubes.setMatrixAt(i, dummy.matrix);
+// }
+
+// This is for the ground plane
 const groundGeometry = new THREE.PlaneGeometry(30, 30);
 const groundMaterial = new THREE.MeshStandardMaterial({ map: texture, side: THREE.DoubleSide });
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
@@ -56,35 +85,19 @@ ground.rotation.x = -Math.PI / 2;
 ground.position.y = -2;
 scene.add(ground);
 
-// This is for the sphere
-const geometry2 = new THREE.SphereGeometry(0.5, 32, 32);
-const material2 = new THREE.MeshStandardMaterial({ color: 0xffffff, wireframe: true });
-const sphere = new THREE.Mesh(geometry2, material2);
-sphere.position.set(2, 0, 0);
-scene.add(sphere);
-
-// This is for the torus
-const geometry3 = new THREE.TorusGeometry(0.5, 0.2, 8, 50);
-const material3 = new THREE.MeshStandardMaterial({ color: 0xff0000, wireframe: true });
-const torus = new THREE.Mesh(geometry3, material3);
-torus.position.set(-2, 0, 0);
-scene.add(torus);
-
 // This is for the 3d model
 const gltfLoader = new GLTFLoader();
 gltfLoader.load('ASG5/shotgun.glb', (gltf) => {
     const model = gltf.scene;
-    model.position.set(-5, 1, -10);
-    model.rotation.set(0, Math.PI / 2, 0);
+    model.position.set(-1.2, .75, 1);
+    model.rotation.set(90, Math.PI / -50, 0);
+    model.scale.set(0.1, 0.1, 0.1); // Adjust scale as needed
     scene.add(model);
 }, undefined, function (error) {
     console.error('An error occurred while loading the GLTF model:', error);
 });
 
 camera.position.z = 5;
-
-console.log("Hello, World!");
-//console.log(gltf.scene);
 
 const color = 0xFFFFFF; // white
 const intensity = 1; // brightness of the light
@@ -113,6 +126,7 @@ scene.add(hemisphereLight);
 
 function animate() {
     requestAnimationFrame(animate);
+    controls.update();
     cube.rotation.x += 0.01;
     cube.rotation.y += 0.01;
     renderer.render(scene, camera);
@@ -123,6 +137,59 @@ renderer.setAnimationLoop(animate);
 function updateCamera() {
     camera.updateProjectionMatrix();
 }
+
+/// ChatGPT helped me with this low-poly person creation
+function createLowPolyPerson() {
+    const person = new THREE.Group();
+
+    const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 }); // brown for the body
+    const limbMaterial = new THREE.MeshStandardMaterial({ color: 0xFFD700 }); // gold for the limbs
+    const headMaterial = new THREE.MeshStandardMaterial({ color: 0xFFDBAC }); // light skin tone for the head
+
+    // cylinder for the body
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.5, 8), bodyMaterial);
+    body.position.y = 1;
+    person.add(body);
+
+    // sphere for the head
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), headMaterial);
+    head.position.y = 2.25;
+    person.add(head);
+
+    // left arm
+    const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1, 8), limbMaterial);
+    leftArm.position.set(-0.75, 1.5, 0);
+    leftArm.rotation.z = Math.PI / 3;
+    person.add(leftArm);
+
+    // right arm
+    const rightArm = leftArm.clone();
+    rightArm.position.x = 0.75;
+    rightArm.rotation.z = -Math.PI / 3;
+    person.add(rightArm);
+
+    // left leg
+    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.2, 6), limbMaterial);
+    leftLeg.position.set(-0.3, 0, 0);
+    person.add(leftLeg);
+
+    // right leg
+    const rightLeg = leftLeg.clone();
+    rightLeg.position.x = 0.3;
+    person.add(rightLeg);
+
+    return person;
+}
+
+const person = createLowPolyPerson();
+person.position.set(2, -1.5, 0);
+person.rotation.y = Math.PI / 4; // Rotate to face the camera
+scene.add(person);
+
+const person2 = createLowPolyPerson();
+person2.position.set(-2, -1.5, 0);
+person2.rotation.y = -Math.PI / 4;
+scene.add(person2);
 
 const gui = new GUI();
 gui.add(camera, 'fov', 1, 180).onChange(updateCamera);
